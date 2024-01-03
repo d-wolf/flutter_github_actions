@@ -13,7 +13,6 @@ on:
 
 # 4
 jobs:
-
   # 1
   version:
     name: Create version number
@@ -22,6 +21,8 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       # 2
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v0.9.7
@@ -72,4 +73,3 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Start release build
         run: flutter build appbundle
-
