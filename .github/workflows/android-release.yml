@@ -1,5 +1,6 @@
 name: Android Release
 
+
 # 1
 on:
   # 2
@@ -16,7 +17,7 @@ jobs:
   # 5
   build:
     # 6
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     # 7
     steps:
