@@ -1,9 +1,10 @@
 # flutter_github_actions
 
-A new Flutter project.
+Demonstrates how to setup a simple CI/CD pipeline with [Github Actions](https://github.com/features/actions).
 
-## Setup
-### Sign Android
+## Setup Android
+
+### Sign
 
 * `brew install temurin`
 * [prepare signing](https://docs.flutter.dev/deployment/android)
@@ -33,7 +34,7 @@ Add the following keys to `Repo > Settings > Secrets and variables > Actions`.
   "universe_domain": "googleapis.com"
 }
 ```
-* add the json content as `ANDROID_SERVICE_ACCOUNT_KEY` to `Repo > Settings > Secrets and variables > Actions`
+* add the .json content as `ANDROID_SERVICE_ACCOUNT_KEY` to `Repo > Settings > Secrets and variables > Actions`
 
 ## Sources
 * https://blog.logrocket.com/flutter-ci-cd-using-github-actions/
