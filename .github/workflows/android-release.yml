@@ -27,7 +27,7 @@ jobs:
         uses: gittools/actions/gitversion/execute@v0.9.7
 
       - name: Create version.txt with nuGetVersion
-        run: echo ${{ steps.gitversion.outputs.nuGetVersion  }} > version.txt
+        run: echo ${{ env.nuGetVersion  }} > version.txt
 
       - name: Upload version.txt
         uses: actions/upload-artifact@v2
@@ -96,5 +96,5 @@ jobs:
       - name: Upload release
         uses: actions/upload-artifact@v2
         with:
-          name: release
+          name: release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
