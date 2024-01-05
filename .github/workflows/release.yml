@@ -35,7 +35,7 @@ jobs:
           name: gitversion
           path: version.txt
 
-  build:
+  build_android:
     name: Build Android
     runs-on: ubuntu-latest
     needs: [version]
@@ -99,9 +99,69 @@ jobs:
           name: release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
+  build_ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Resources:
+      # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+      - name: Install the Apple certificate and provisioning profile
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+          IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # import certificate and provisioning profile from secrets
+          echo -n "$IOS_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+          echo -n "$IOS_PROVISION_PROFILE_BASE64" | base64 --decode --output $PP_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$IOS_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$IOS_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$IOS_CERTIFICATE_PW" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # apply provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.16.5"
+          channel: "stable"
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Building IPA
+        run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+      - name: collect ipa artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: release.ipa
+          path: build/ios/ipa/*.ipa
+
+      - name: Clean up keychain and provisioning profile
+        if: ${{ always() }}
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
+
   deploy:
     name: Deploy Android Build
-    needs: build
+    needs: [build_android, build_ios]
     runs-on: ubuntu-latest
 
     steps:
