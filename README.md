@@ -71,6 +71,9 @@ Add the following keys to `Repo > Settings > Secrets and variables > Actions`:
   - `<key>teamID</key>` - enter the `the com.apple.developer.team-identifier` from mobile provisioning profile
   - `<key>com.example.flutter_github_actions</key>` - enter the `UUID` from mobile provisioning profile
 
+### SemVer Usage
+- https://gitversion.net/docs/reference/version-increments
+
 ## Sources
 
 - https://blog.logrocket.com/flutter-ci-cd-using-github-actions/
