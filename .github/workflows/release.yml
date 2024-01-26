@@ -69,7 +69,7 @@ jobs:
           echo "$GITHUB_RUN_NUMBER_WITH_OFFSET"
 
       - name: Update version in .yaml
-        run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+"$GITHUB_RUN_NUMBER_WITH_OFFSET"/g' pubspec.yaml
+        run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+$GITHUB_RUN_NUMBER_WITH_OFFSET/g' pubspec.yaml
         working-directory: ${{env.WORKING_DIRECTORY}}
 
       - name: Upload xxx
@@ -78,125 +78,10 @@ jobs:
           name: yaml
           path: app/pubspec.yaml
 
-      - name: Download Android keystore
-        id: android_keystore
-        uses: timheuer/base64-to-file@v1.0.3
+      - name: create a GitHub release with artifacts
+        uses: ncipollo/release-action@v1
         with:
-          fileName: upload-keystore.jks
-          encodedString: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-
-      - name: Create key.properties
-        run: |
-          echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties
-          echo "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}" >> android/key.properties
-          echo "keyPassword=${{ secrets.ANDROID_STORE_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-
-      - uses: actions/setup-java@v3
-        with:
-          java-version: "11"
-          distribution: "temurin"
-          cache: gradle
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.16.5"
-          channel: "stable"
-          cache: true
-
-      - name: Get dependencies
-        run: flutter pub get
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-
-      - name: Start release build
-        run: flutter build apk --release
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-
-      - name: Upload release
-        uses: actions/upload-artifact@v2
-        with:
-          name: release.apk
-          path: ${{ env.WORKING_DIRECTORY }}/build/app/outputs/flutter-apk/app-release.apk
-
-  build_ios:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      # Resources:
-      # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
-      - name: Install the Apple certificate and provisioning profile
-        env:
-          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
-          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
-          IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
-        run: |
-          # create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-
-          # import certificate and provisioning profile from secrets
-          echo -n "$IOS_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
-          echo -n "$IOS_PROVISION_PROFILE_BASE64" | base64 --decode --output $PP_PATH
-
-          # create temporary keychain
-          security create-keychain -p "$IOS_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$IOS_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-          # import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$IOS_CERTIFICATE_PW" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-
-          # apply provisioning profile
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.16.5"
-          channel: "stable"
-          cache: true
-
-      - run: flutter pub get
-
-      - name: Building IPA
-        run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
-
-      - name: collect ipa artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: release.ipa
-          path: build/ios/ipa/*.ipa
-
-      - name: Clean up keychain and provisioning profile
-        if: ${{ always() }}
-        run: |
-          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
-
-  deploy:
-    name: Deploy Android Build
-    needs: [build_android, build_ios]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Get Android Build from artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: release.apk
-
-      - name: Release Build to internal track
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.ANDROID_SERVICE_ACCOUNT_KEY }}
-          packageName: com.example.flutter_github_actions
-          releaseFiles: release.apk
-          track: alpha
-          status: completed
+          tag: "${{ steps.version.outputs.content }}+$GITHUB_RUN_NUMBER_WITH_OFFSET"
+          artifactErrorsFailBuild: true
+          artifacts: "app/pubspec.yaml"
+          token: ${{ secrets.GITHUB_TOKEN }}
