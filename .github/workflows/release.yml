@@ -68,9 +68,15 @@ jobs:
         run: |
           echo "$GITHUB_RUN_NUMBER_WITH_OFFSET"
 
-      - name: Update version in YAML
-        run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+${{ github.run_number }}/g' pubspec.yaml
+      - name: Update version in .yaml
+        run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+"$GITHUB_RUN_NUMBER_WITH_OFFSET"/g' pubspec.yaml
         working-directory: ${{env.WORKING_DIRECTORY}}
+
+      - name: Upload xxx
+        uses: actions/upload-artifact@v2
+        with:
+          name: yaml
+          path: app/pubspec.yaml
 
       - name: Download Android keystore
         id: android_keystore
