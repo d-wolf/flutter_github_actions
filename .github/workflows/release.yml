@@ -59,6 +59,11 @@ jobs:
         with:
           path: version1.txt
 
+      - name: increase build
+        run: |
+          echo "GITHUB_RUN_NUMBER_WITH_OFFSET=$((${{ github.run_number }}+100))" >> $GITHUB_ENV
+          echo $GITHUB_RUN_NUMBER_WITH_OFFSET
+
       - name: Update version in YAML
         run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+${{ github.run_number }}/g' pubspec.yaml
         working-directory: ${{env.WORKING_DIRECTORY}}
