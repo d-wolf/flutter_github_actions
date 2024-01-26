@@ -69,7 +69,7 @@ jobs:
           echo "$GITHUB_RUN_NUMBER_WITH_OFFSET"
 
       - name: Update version in .yaml
-        run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+$GITHUB_RUN_NUMBER_WITH_OFFSET/g' pubspec.yaml
+        run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+${{env.GITHUB_RUN_NUMBER_WITH_OFFSET}}/g' pubspec.yaml
         working-directory: ${{env.WORKING_DIRECTORY}}
 
       - name: Upload xxx
@@ -81,7 +81,7 @@ jobs:
       - name: create a GitHub release with artifacts
         uses: ncipollo/release-action@v1
         with:
-          tag: "${{ steps.version.outputs.content }}+$GITHUB_RUN_NUMBER_WITH_OFFSET"
+          tag: "${{ steps.version.outputs.content }}+${{env.GITHUB_RUN_NUMBER_WITH_OFFSET}}"
           artifactErrorsFailBuild: true
           artifacts: "app/pubspec.yaml"
           token: ${{ secrets.GITHUB_TOKEN }}
