@@ -68,12 +68,6 @@ jobs:
         run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+${{ steps.build.outputs.content }}/g' pubspec.yaml
         working-directory: ${{env.WORKING_DIRECTORY}}
 
-      # - name: Upload
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: yaml
-      #     path: ${{env.WORKING_DIRECTORY}}/pubspec.yaml
-
       - name: create release with artifacts
         uses: ncipollo/release-action@v1
         with:
