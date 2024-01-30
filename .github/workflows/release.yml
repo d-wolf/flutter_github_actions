@@ -28,7 +28,9 @@ jobs:
           configFilePath: GitVersion.yml
 
       - name: Create version.txt with nuGetVersion
-        run: echo ${{ env.GITVERSION_SEMVER  }} > version.txt
+        run: |
+          echo ${{ env.GITVERSION_SEMVER  }} > version.txt
+          echo "$((${{ github.run_number }}+100))" >> version.txt
 
       - name: Upload version.txt
         uses: actions/upload-artifact@v2
