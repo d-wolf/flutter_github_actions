@@ -56,13 +56,13 @@ jobs:
         id: version
         uses: juliangruber/read-file-action@v1
         with:
-          path: build_info/version.txt
+          path: version.txt
 
       - name: Read version
         id: build
         uses: juliangruber/read-file-action@v1
         with:
-          path: build_info/build.txt
+          path: build.txt
 
       - name: Update version in .yaml
         run: sed -i 's/0.0.0+0/${{ steps.version.outputs.content }}+${{ steps.build.outputs.content }}/g' pubspec.yaml
@@ -77,7 +77,8 @@ jobs:
       - name: create release with artifacts
         uses: ncipollo/release-action@v1
         with:
-          tag: "${{ steps.version.outputs.content }}+${{env.GITHUB_RUN_NUMBER_WITH_OFFSET}}"
-          artifactErrorsFailBuild: true
+          name: "${{ steps.version.outputs.content }}+${{ steps.build.outputs.content }}"
+          tag: "${{ steps.version.outputs.content }}"
           artifacts: "${{env.WORKING_DIRECTORY}}/pubspec.yaml"
           token: ${{ secrets.GITHUB_TOKEN }}
+          artifactErrorsFailBuild: true
