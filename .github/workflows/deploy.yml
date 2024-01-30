@@ -1,4 +1,4 @@
-name: Android Release
+name: deploy
 
 on:
   workflow_dispatch:
@@ -48,7 +48,7 @@ jobs:
           fetch-depth: 0
 
       - name: get build_info
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: build_info
 
@@ -77,8 +77,8 @@ jobs:
       - name: create release with artifacts
         uses: ncipollo/release-action@v1
         with:
-          name: "${{ steps.version.outputs.content }}+${{ steps.build.outputs.content }}"
-          tag: "${{ steps.version.outputs.content }}"
-          artifacts: "${{env.WORKING_DIRECTORY}}/pubspec.yaml"
+          name: ${{ steps.version.outputs.content }}+${{ steps.build.outputs.content }}
+          tag: ${{ steps.version.outputs.content }}
+          artifacts: ${{ env.WORKING_DIRECTORY }}/pubspec.yaml
           token: ${{ secrets.GITHUB_TOKEN }}
           artifactErrorsFailBuild: true
