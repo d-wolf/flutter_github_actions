@@ -5,10 +5,10 @@ on:
 
 env:
   WORKING_DIRECTORY: "app"
+  BUILD_OFFSET: "100"
 
 jobs:
   version:
-    name: Create version number
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -29,17 +29,17 @@ jobs:
 
       - name: Create version.txt with nuGetVersion
         run: |
-          echo ${{ env.GITVERSION_SEMVER  }} > version.txt
-          echo "$((${{ github.run_number }}+100))" >> version.txt
+          mkdir info
+          echo -n ${{ env.GITVERSION_SEMVER  }} > info/version.txt
+          echo -n "$((${{ github.run_number }}+${{ env.BUILD_OFFSET }}))" > info/build.txt
 
-      - name: Upload version.txt
+      - name: Upload version
         uses: actions/upload-artifact@v2
         with:
-          name: gitversion
-          path: version.txt
+          name: version
+          path: info
 
-  build_android:
-    name: Build Android
+  deploy:
     runs-on: ubuntu-latest
     needs: [version]
     steps:
@@ -50,7 +50,12 @@ jobs:
       - name: Get version.txt
         uses: actions/download-artifact@v2
         with:
-          name: gitversion
+          name: version
+
+      - name: Get version.txt
+        uses: actions/download-artifact@v2
+        with:
+          name: version
 
       - name: Create new file without newline char from version.txt
         run: tr -d '\n' < version.txt > version1.txt
